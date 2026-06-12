@@ -12,14 +12,14 @@ export async function analyticsRoutes(
     '/overview',
     {
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      preHandler: [async (request, reply) => { const server = request.server as any; if (typeof server?.authenticate === 'function') { await server.authenticate(request, reply); return } if (typeof (app as any).authenticate === 'function') { await (app as any).authenticate(request, reply); return } try { await request.jwtVerify() } catch (e) { reply.status(401).send({ error: 'Unauthorized' }) } }],
+      preHandler: [app.authenticate],
     },
     async (
       request: FastifyRequest,
       _reply: FastifyReply
     ) => {
-      const userId = (request.user as any).id;
-      const username = (request.user as any).username;  
+      const userId = request.user.id;
+      const username = request.user.username;
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -98,7 +98,7 @@ export async function analyticsRoutes(
     '/views',
     {
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      preHandler: [async (request, reply) => { const server = request.server as any; if (typeof server?.authenticate === 'function') { await server.authenticate(request, reply); return } if (typeof (app as any).authenticate === 'function') { await (app as any).authenticate(request, reply); return } try { await request.jwtVerify() } catch (e) { reply.status(401).send({ error: 'Unauthorized' }) } }],
+      preHandler: [app.authenticate],
     },
     async (
       request: FastifyRequest<{
@@ -109,7 +109,7 @@ export async function analyticsRoutes(
       }>,
       _reply: FastifyReply
     ) => {
-      const userId = (request.user as any).id;
+      const userId = request.user.id;
       const page = parseInt(request.query.page || '1', 10);
       const limit = 20;
       const skip = (page - 1) * limit;
