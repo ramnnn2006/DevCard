@@ -2,10 +2,10 @@ import { handleDbError, isGitHubTokenError, isGoogleTokenError } from '../utils/
 import { extractRawJwt, blocklistKey, signAccessToken  } from '../utils/jwt.js';
 import { buildOAuthState, getMobileRedirectUri } from '../utils/oauth.js';
 import { generateRefreshToken, hashIp, hashRefreshToken } from '../utils/refreshToken.js';
-import { oAuthStartSchema, oauthCallbackSchema } from '../validations/auth.validation.js';
+import { oAuthStartSchema, oAuthCallbackSchema } from '../validations/auth.validation.js';
 
 import type { GitHubTokenErrorResponse, GitHubTokenResponse } from '../utils/error.util.js';
-import type { OAuthStartQuery } from '../validations/auth.validation.js';
+import type { OAuthStartQuery, OAuthCallbackQuery } from '../validations/auth.validation.js';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
 interface GitHubEmailResponse {
@@ -20,11 +20,6 @@ const GITHUB_USER_URL = 'https://api.github.com/user';
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USER_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
-
-interface OAuthCallbackQuery {
-  code: string;
-  state?: string;
-}
 
 interface GoogleUser {
   id: string;
@@ -99,7 +94,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   // GitHub OAuth callback
   app.get('/github/callback', async (request: FastifyRequest<{ Querystring: OAuthCallbackQuery }>, reply: FastifyReply) => {
-    const parsed = oauthCallbackSchema.safeParse(request.query);
+    const parsed = oAuthCallbackSchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Invalid callback parameters', details: parsed.error.flatten() });
     }
@@ -316,7 +311,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   // Google callback
   app.get('/google/callback', async (request: FastifyRequest<{ Querystring: OAuthCallbackQuery }>, reply: FastifyReply) => {
-    const parsed = oauthCallbackSchema.safeParse(request.query);
+    const parsed = oAuthCallbackSchema.safeParse(request.query);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Invalid callback parameters', details: parsed.error.flatten() });
     }
