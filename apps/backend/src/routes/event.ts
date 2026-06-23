@@ -58,7 +58,7 @@ type EventWithAttendees = {
   }[];
 }
 
-export async function eventRoutes(app:FastifyInstance): Promise<void>  {
+export async function eventRoutes(app:FastifyInstance): Promise<void> {
         app.post<{Body: { name: string; description?: string; startDate: string; location: string; endDate: string; isPublic?: boolean; }}>('/', { preHandler: [(req, reply) => app.authenticate(req, reply)] }, async (request, reply) => {
          const userId = request.user.id;
         const parsed = createEventSchema.safeParse(request.body); 

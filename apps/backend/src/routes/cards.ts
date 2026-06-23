@@ -3,7 +3,7 @@ import { handleDbError } from '../utils/error.util.js';
 import { hashIp } from '../utils/refreshToken';
 import { createCardSchema ,updateCardSchema, addPlatformLinkSchema} from '../validations/card.validation';
 
-import type { CardResponse, UpdateCardBody, UpdatedCardResponse } from '../services/cardService';
+import type { CardResponse, UpdateCardBody,UpdatedCardResponse } from '../services/cardService';
 import type { Card } from '@devcard/shared/src/types.js';
 import type { CardVisibility } from '@prisma/client';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
@@ -62,15 +62,9 @@ function hasErrorCode(
 }
 
 export async function cardRoutes(app: FastifyInstance): Promise<void> {
-  app.addHook('preHandler', async (request, reply) => {
-    const server = request.server;
-    if (typeof server?.authenticate === 'function') { await server.authenticate(request, reply); return }
-    if (typeof app.authenticate === 'function') { await app.authenticate(request, reply); return }
-    try { await request.jwtVerify() } catch (_e) { reply.status(401).send({ error: 'Unauthorized' }) }
-  });
-
+ 
   // ─── List Cards ───
-  app.get('/', async (request: FastifyRequest, reply: FastifyReply): Promise<CardResponse[] | void> => {
+  app.get('/', {preHandler: [(req, reply) => app.authenticate(req, reply)] },async (request: FastifyRequest, reply: FastifyReply): Promise<CardResponse[] | void> => {
     const userId = request.user.id;
     try {
       return await cardService.listCards(app, userId)
@@ -80,7 +74,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ─── Creates Card ───
-  app.post('/', async (request: FastifyRequest<{ Body: CreateCardBody }>, reply: FastifyReply): Promise<Card | void> => {
+  app.post<{ Body: CreateCardBody }>('/', { preHandler: [(req, reply) => app.authenticate(req, reply)]}, async (request, reply): Promise<Card | void> => {
     const userId = request.user.id;
     const parsed = createCardSchema.safeParse(request.body);
 
@@ -99,7 +93,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Update Card ───
 
-  app.put('/:id', async (request: FastifyRequest<{ Params: CardParams; Body: UpdateCardBody }>, reply: FastifyReply): Promise<UpdatedCardResponse> => {
+ app.put<{ Params: CardParams; Body: UpdateCardBody }>('/:id', {preHandler: [(req, reply) => app.authenticate(req, reply)] }, async (request, reply): Promise<UpdatedCardResponse> => {
     const userId = request.user.id;
     const { id } = request.params;
 
@@ -117,7 +111,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Delete Card ───
 
-  app.delete('/:id', async (request: FastifyRequest<{ Params: CardParams }>, reply: FastifyReply): Promise<void> => {
+  app.delete<{ Params: CardParams }>('/:id', { preHandler: [(req, reply) => app.authenticate(req, reply)]}, async (request, reply): Promise<void> => {
     const userId = request.user.id;
     const { id } = request.params;
 
@@ -139,7 +133,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ─── Set Default Card ───
-  app.put('/:id/default', async (request: FastifyRequest<{ Params: CardParams }>, reply: FastifyReply): Promise<object | void> => {
+  app.put<{ Params: CardParams }>('/:id/default', {preHandler: [(req, reply) => app.authenticate(req, reply)]}, async (request, reply): Promise<object | void> => {
     const userId = request.user.id;
     const { id } = request.params;
 
